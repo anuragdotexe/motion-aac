@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Motion AAC</title>
+    <style>
+        body { font-family: system-ui; text-align: center; background: #121212; color: white; padding: 20px; touch-action: manipulation; }
+        .status-card { border: 2px solid #333; padding: 20px; border-radius: 20px; background: #1e1e1e; margin: 20px 0; }
+        #live-data { font-family: monospace; color: #00ff00; font-size: 1.2rem; }
+        #display-word { font-size: 2.5rem; font-weight: 800; color: #ffcc00; margin: 20px 0; text-transform: uppercase; }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        button { width: 80%; max-width: 300px; padding: 25px; font-size: 1.4rem; font-weight: bold; border: none; border-radius: 15px; cursor: pointer; transition: transform 0.1s; }
+        #startBtn { background: #28a745; color: white; }
+        #stopBtn { background: #dc3545; color: white; display: none; }
+        button:active { transform: scale(0.95); }
+        
+        .indicator { width: 15px; height: 15px; border-radius: 50%; display: inline-block; background: red; margin-right: 10px; }
+        .active-light { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+    </style>
+</head>
+<body>
+
+    <h1><span id="light" class="indicator"></span>AAC Motion</h1>
+
+    <div class="status-card">
+        <div id="display-word">SYSTEM OFF</div>
+        <div id="live-data">X: 0.0 | Y: 0.0</div>
+    </div>
+
+    <div class="btn-group">
+        <button id="startBtn" onclick="initSystem()">ACTIVATE SYSTEM</button>
+        <button id="stopBtn" onclick="stopSystem()">STOP SYSTEM</button>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let isLocked = false;
+        let sx = 0, sy = 0; // Smoothed values
+        const factor = 0.15; // Smoothing factor (0.1 to 0.3)
+
+        const display = document.getElementById('display-word');
+        const dataLog = document.getElementById('live-data');
+        const light = document.getElementById('light');
+
+        // This function MUST be called by a button click
+        async function initSystem() {
+            try {
+                // 1. Request Permission (Crucial for iOS/Modern Android)
+                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                    const permission = await DeviceMotionEvent.requestPermission();
+                    if (permission !== 'granted') {
+                        alert("Permission denied. Check your phone settings.");
+                        return;
+                    }
+                }
+
+                // 2. Start Listeners
+                window.addEventListener('devicemotion', processMotion, true);
+                
+                // 3. Unlock Voice (browsers need a 'warm up' click)
+                const warmUp = new SpeechSynthesisUtterance("");
+                window.speechSynthesis.speak(warmUp);
+
+                // 4. Update UI
+                isRunning = true;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+                light.classList.add('active-light');
+                display.innerText = "READY (FLAT)";
+                
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        function processMotion(event) {
+            if (!isRunning) return;
+
+            // Low-pass filter to remove hand jitter
+            let rx = event.accelerationIncludingGravity.x || 0;
+            let ry = event.accelerationIncludingGravity.y || 0;
+
+            sx = (rx * factor) + (sx * (1 - factor));
+            sy = (ry * factor) + (sy * (1 - factor));
+
+            dataLog.innerText = `X: ${sx.toFixed(1)} | Y: ${sy.toFixed(1)}`;
+
+            // Reset logic: Must return to flat center
+            if (Math.abs(sx) < 1.8 && Math.abs(sy) < 1.8) {
+                if (isLocked) {
+                    isLocked = false;
+                    display.innerText = "READY (FLAT)";
+                    display.style.color = "#00ff00";
+                }
+            }
+
+            // Trigger Logic (Smarter thresholding)
+            if (!isLocked) {
+                if (sx > 7.0) trigger("No");
+                else if (sx < -7.0) trigger("Yes");
+                else if (sy < -6.5) trigger("Sure");
+                else if (sy > 6.5) trigger("Why?");
+            }
+        }
+
+        function trigger(text) {
+            isLocked = true;
+            display.innerText = text;
+            display.style.color = "#ffcc00";
+
+            window.speechSynthesis.cancel();
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.rate = 0.9;
+            window.speechSynthesis.speak(speech);
+        }
+
+        function stopSystem() {
+            window.removeEventListener('devicemotion', processMotion);
+            window.speechSynthesis.cancel();
+            isRunning = false;
+            light.classList.remove('active-light');
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+            display.innerText = "SYSTEM OFF";
+            display.style.color = "white";
+        }
+    </script>
+</body>
+</html>
