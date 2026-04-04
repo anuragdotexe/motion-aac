@@ -1,4 +1,4 @@
-# 📱 Motion-to-Speech (AAC Helper)
+# 📱 Motion-to-Speech (AAC)
 
 A specialized communication tool designed for individuals with motor or speech challenges. This web-based application uses a smartphone's internal **accelerometer** to translate physical tilts into clear, audible speech.
 
