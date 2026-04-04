@@ -21,7 +21,7 @@ The app maps the 3D orientation of the phone to specific phrases:
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Prerequisites (depends)
 - A modern smartphone (Android or iOS).
 - A browser that supports the Device Orientation API (Chrome, Safari, Firefox).
 - **HTTPS is required** for sensor access.
