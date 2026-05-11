@@ -18,7 +18,6 @@ The app maps the 3D orientation of the phone to specific phrases:
 | **Tilt Backward (Y-Axis)** | "Why?" |
 
 
-
 ## 🚀 Getting Started
 
 ### Prerequisites (depends)
