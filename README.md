@@ -7,6 +7,7 @@ A specialized communication tool designed for individuals with motor or speech c
 - **Return-to-Center Logic:** Prevents accidental repeated speech by requiring the phone to return to a "Flat" position between phrases.
 - **Voice Feedback:** Uses the Web Speech API for high-quality, offline text-to-speech.
 - **Visual Feedback:** Real-time X/Y coordinate display and system status indicators.
+  
 
 ## 🛠 How It Works
 The app maps the 3D orientation of the phone to specific phrases:
